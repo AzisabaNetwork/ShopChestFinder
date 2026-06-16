@@ -1,0 +1,20 @@
+# -----------------------------
+# ShopChestFinder Configuration
+# -----------------------------
+
+# If an item's Material is in this list, it will be grouped solely by its Material in the GUI.
+# Custom names, lore, enchantments, and NBT tags will be ignored for these materials.
+# (Note: Shulker Box contents and Map IDs are always ignored regardless of this setting)
+group-materials:
+  - ENCHANTED_BOOK
+  - POTION
+
+# If an item's Material is in this list, it will be completely excluded from the GUI.
+# (e.g. all written books will be excluded)
+exclude-materials:
+  - WRITTEN_BOOK
+
+# If an item's Material is in this list, it will be excluded ONLY IF it is a vanilla item.
+# (i.e. it does not have a custom display name or custom lore)
+exclude-vanilla-materials:
+  - STICK

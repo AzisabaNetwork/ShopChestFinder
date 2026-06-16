@@ -1,0 +1,12 @@
+name: ShopChestFinder
+version: '${version}'
+main: net.azisaba.shopchestfinder.ShopChestFinder
+api-version: '1.15'
+authors: [ Azisaba Network]
+website: https://github.com/AzisabaNetwork/ShopChestFinder
+depend:
+  - ShopChest
+commands:
+  findshop:
+    description: Opens a GUI to find shops
+    usage: /<command>
