@@ -6,7 +6,14 @@ authors: [ Azisaba Network]
 website: https://github.com/AzisabaNetwork/ShopChestFinder
 depend:
   - ShopChest
+softdepend:
+  - Towny
+  - Vault
 commands:
   findshop:
     description: Opens a GUI to find shops
     usage: /<command>
+permissions:
+  shopchestfinder.admin:
+    description: Allows you to see and teleport to every shop and to edit the material lists.
+    default: op

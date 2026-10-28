@@ -1,7 +1,7 @@
 package net.azisaba.shopchestfinder.command;
 
-import net.azisaba.shopchestfinder.gui.ItemCategoryGUI;
-import net.azisaba.shopchestfinder.gui.SettingsGUI;
+import net.azisaba.shopchestfinder.ShopChestFinder;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -11,115 +11,142 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
+/**
+ * {@code /findshop [page | search <keyword> | settings | config ...]}
+ */
 public class FindShopCommand implements CommandExecutor, TabCompleter {
+    private static final String USAGE = "§c使用方法: /findshop [ページ番号 | search <キーワード> | settings | config ...]";
+    private static final String CONFIG_USAGE = "§c使用方法: /findshop config <group-materials|exclude-materials|exclude-vanilla-materials> <add|remove> <Material>";
+
+    private final ShopChestFinder plugin;
+
+    public FindShopCommand(ShopChestFinder plugin) {
+        this.plugin = plugin;
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("config")) {
+            changeConfig(sender, args);
+            return true;
+        }
+
         if (!(sender instanceof Player)) {
             sender.sendMessage("This command is only for players.");
             return true;
         }
-        
         Player player = (Player) sender;
-        if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("settings")) {
-                SettingsGUI.open(player);
-                return true;
-            } else if (args[0].equalsIgnoreCase("search")) {
-                if (args.length > 1) {
-                    String keyword = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-                    ItemCategoryGUI.open(player, 1, keyword);
-                } else {
-                    player.sendMessage("§c使用方法: /findshop search <キーワード>");
-                }
-                return true;
-            } else if (args[0].equalsIgnoreCase("config")) {
-                if (!sender.hasPermission("shopchestfinder.admin")) {
-                    sender.sendMessage("§cこのコマンドを実行する権限がありません。");
-                    return true;
-                }
-                if (args.length < 4) {
-                    sender.sendMessage("§c使用方法: /findshop config <group-materials|exclude-materials|exclude-vanilla-materials> <add|remove> <Material>");
-                    return true;
-                }
-                String listName = args[1].toLowerCase();
-                if (!listName.equals("group-materials") && !listName.equals("exclude-materials") && !listName.equals("exclude-vanilla-materials")) {
-                    sender.sendMessage("§c無効なリスト名です。");
-                    return true;
-                }
-                String action = args[2].toLowerCase();
-                String materialName = args[3].toUpperCase();
-                
-                try {
-                    org.bukkit.Material.valueOf(materialName);
-                } catch (IllegalArgumentException e) {
-                    sender.sendMessage("§c無効なマテリアル名です: " + materialName);
-                    return true;
-                }
-                
-                org.bukkit.configuration.file.FileConfiguration config = net.azisaba.shopchestfinder.ShopChestFinder.getInstance().getConfig();
-                java.util.List<String> list = config.getStringList(listName);
-                if (action.equals("add")) {
-                    if (!list.contains(materialName)) {
-                        list.add(materialName);
-                        config.set(listName, list);
-                        net.azisaba.shopchestfinder.ShopChestFinder.getInstance().saveConfig();
-                        sender.sendMessage("§a" + listName + " に " + materialName + " を追加しました。");
-                        net.azisaba.shopchestfinder.ShopChestFinder.getInstance().getShopCache().updateCache();
-                    } else {
-                        sender.sendMessage("§c既にリストに含まれています。");
-                    }
-                } else if (action.equals("remove")) {
-                    if (list.contains(materialName)) {
-                        list.remove(materialName);
-                        config.set(listName, list);
-                        net.azisaba.shopchestfinder.ShopChestFinder.getInstance().saveConfig();
-                        sender.sendMessage("§a" + listName + " から " + materialName + " を削除しました。");
-                        net.azisaba.shopchestfinder.ShopChestFinder.getInstance().getShopCache().updateCache();
-                    } else {
-                        sender.sendMessage("§cリストに含まれていません。");
-                    }
-                } else {
-                    sender.sendMessage("§c使用方法: /findshop config <リスト名> <add|remove> <Material>");
-                }
-                return true;
+
+        if (args.length == 0) {
+            plugin.getMenu().openItems(player, 1, null);
+        } else if (args[0].equalsIgnoreCase("settings")) {
+            plugin.getMenu().openSettings(player);
+        } else if (args[0].equalsIgnoreCase("search")) {
+            if (args.length > 1) {
+                String keyword = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+                plugin.getMenu().openItems(player, 1, keyword);
             } else {
-                try {
-                    int page = Integer.parseInt(args[0]);
-                    ItemCategoryGUI.open(player, page, null);
-                    return true;
-                } catch (NumberFormatException e) {
-                    player.sendMessage("§c使用方法: /findshop [ページ番号 | search <キーワード> | settings | config ...]");
-                    return true;
-                }
+                player.sendMessage("§c使用方法: /findshop search <キーワード>");
+            }
+        } else {
+            try {
+                plugin.getMenu().openItems(player, Integer.parseInt(args[0]), null);
+            } catch (NumberFormatException e) {
+                player.sendMessage(USAGE);
             }
         }
-
-        ItemCategoryGUI.open(player, 1, null);
         return true;
+    }
+
+    private void changeConfig(CommandSender sender, String[] args) {
+        if (!isAdmin(sender)) {
+            sender.sendMessage("§cこのコマンドを実行する権限がありません。");
+            return;
+        }
+        if (args.length < 4) {
+            sender.sendMessage(CONFIG_USAGE);
+            return;
+        }
+
+        String listName = args[1].toLowerCase(Locale.ROOT);
+        if (!ShopChestFinder.MATERIAL_LISTS.contains(listName)) {
+            sender.sendMessage("§c無効なリスト名です。");
+            return;
+        }
+
+        Material material = Material.matchMaterial(args[3]);
+        if (material == null) {
+            sender.sendMessage("§c無効なマテリアル名です: " + args[3]);
+            return;
+        }
+        String materialName = material.name();
+
+        List<String> list = new ArrayList<>(plugin.getConfig().getStringList(listName));
+        // Entries may have been written by hand in a different case
+        boolean contains = false;
+        for (String entry : list) {
+            if (entry.equalsIgnoreCase(materialName)) contains = true;
+        }
+
+        String action = args[2].toLowerCase(Locale.ROOT);
+        if (action.equals("add")) {
+            if (contains) {
+                sender.sendMessage("§c既にリストに含まれています。");
+                return;
+            }
+            list.add(materialName);
+            sender.sendMessage("§a" + listName + " に " + materialName + " を追加しました。");
+        } else if (action.equals("remove")) {
+            if (!contains) {
+                sender.sendMessage("§cリストに含まれていません。");
+                return;
+            }
+            list.removeIf(materialName::equalsIgnoreCase);
+            sender.sendMessage("§a" + listName + " から " + materialName + " を削除しました。");
+        } else {
+            sender.sendMessage(CONFIG_USAGE);
+            return;
+        }
+
+        plugin.getConfig().set(listName, list);
+        plugin.saveConfig();
+        plugin.loadSettings();
+        plugin.getShopCache().refresh();
+    }
+
+    private static boolean isAdmin(CommandSender sender) {
+        return !(sender instanceof Player) || ShopChestFinder.isAdmin((Player) sender);
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> completions = new ArrayList<>();
+        boolean config = args.length > 1 && args[0].equalsIgnoreCase("config") && isAdmin(sender);
+
         if (args.length == 1) {
-            if ("search".startsWith(args[0].toLowerCase())) completions.add("search");
-            if ("settings".startsWith(args[0].toLowerCase())) completions.add("settings");
-            if (sender.hasPermission("shopchestfinder.admin") && "config".startsWith(args[0].toLowerCase())) completions.add("config");
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("config") && sender.hasPermission("shopchestfinder.admin")) {
-            if ("group-materials".startsWith(args[1].toLowerCase())) completions.add("group-materials");
-            if ("exclude-materials".startsWith(args[1].toLowerCase())) completions.add("exclude-materials");
-            if ("exclude-vanilla-materials".startsWith(args[1].toLowerCase())) completions.add("exclude-vanilla-materials");
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("config") && sender.hasPermission("shopchestfinder.admin")) {
-            if ("add".startsWith(args[2].toLowerCase())) completions.add("add");
-            if ("remove".startsWith(args[2].toLowerCase())) completions.add("remove");
-        } else if (args.length == 4 && args[0].equalsIgnoreCase("config") && sender.hasPermission("shopchestfinder.admin")) {
-            for (org.bukkit.Material mat : org.bukkit.Material.values()) {
-                if (mat.name().startsWith(args[3].toUpperCase())) {
-                    completions.add(mat.name());
+            addMatching(completions, args[0], "search", "settings");
+            if (isAdmin(sender)) addMatching(completions, args[0], "config");
+        } else if (config && args.length == 2) {
+            addMatching(completions, args[1], ShopChestFinder.MATERIAL_LISTS.toArray(new String[0]));
+        } else if (config && args.length == 3) {
+            addMatching(completions, args[2], "add", "remove");
+        } else if (config && args.length == 4) {
+            String prefix = args[3].toUpperCase(Locale.ROOT);
+            for (Material material : Material.values()) {
+                if (material.isItem() && !material.isLegacy() && material.name().startsWith(prefix)) {
+                    completions.add(material.name());
                 }
             }
         }
         return completions;
+    }
+
+    private static void addMatching(List<String> completions, String input, String... options) {
+        String lower = input.toLowerCase(Locale.ROOT);
+        for (String option : options) {
+            if (option.startsWith(lower)) completions.add(option);
+        }
     }
 }

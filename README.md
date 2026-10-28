@@ -1,6 +1,6 @@
 # ShopChestFinder
 
-ShopChestFinder is a highly-performant, GUI-based addon for the [ShopChest](https://github.com/EpicEricEE/ShopChest) plugin. It provides a convenient way for players to search and find items being sold by other players across the server.
+ShopChestFinder is a highly performant, GUI-based addon for the [ShopChest](https://github.com/EpicEricEE/ShopChest) plugin. It provides a convenient way for players to search and find items being sold by other players across the server.
 
 ## Features
 

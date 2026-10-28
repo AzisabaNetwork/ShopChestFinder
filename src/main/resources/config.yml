@@ -2,6 +2,14 @@
 # ShopChestFinder Configuration
 # -----------------------------
 
+# Interval in seconds in which the shop list is rebuilt.
+refresh-interval: 60
+
+# Prices at or below this value are ignored, so display shops with a
+# token price (e.g. 1) don't distort the minimum and average prices.
+# Shops without any remaining price are not listed. Set to 0 to disable.
+ignore-price-at-or-below: 1
+
 # If an item's Material is in this list, it will be grouped solely by its Material in the GUI.
 # Custom names, lore, enchantments, and NBT tags will be ignored for these materials.
 # (Note: Shulker Box contents and Map IDs are always ignored regardless of this setting)
