@@ -1,7 +1,7 @@
 name: ShopChestFinder
 version: '${version}'
 main: net.azisaba.shopchestfinder.ShopChestFinder
-api-version: '1.15'
+api-version: '1.21'
 authors: [ Azisaba Network]
 website: https://github.com/AzisabaNetwork/ShopChestFinder
 depend:

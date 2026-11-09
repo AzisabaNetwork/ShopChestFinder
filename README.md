@@ -67,8 +67,8 @@ exclude-vanilla-materials:
 
 ## Requirements
 
-- Minecraft Server (1.15+)
-- Java 8+
+- Paper 1.21.11
+- Java 21+
 - **[ShopChest](https://github.com/EpicEricEE/ShopChest)** plugin installed on the server.
 
 ## Building from source
